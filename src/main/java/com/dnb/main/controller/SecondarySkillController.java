@@ -1,6 +1,22 @@
 // src/main/java/com/dnb/main/controller/SecondarySkillController.java
 package com.dnb.main.controller;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.dnb.main.dto.ApiResponse;
 import com.dnb.main.model.PrimarySkill;
 import com.dnb.main.model.SecondarySkill;
@@ -8,13 +24,8 @@ import com.dnb.main.model.User;
 import com.dnb.main.service.PrimarySkillService;
 import com.dnb.main.service.SecondarySkillService;
 import com.dnb.main.service.UserService;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Optional;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/secondary-skills")
@@ -29,19 +40,35 @@ public class SecondarySkillController {
     @Autowired
     private UserService userService;
 
-    @GetMapping
-    public ResponseEntity<ApiResponse> getSecondarySkillsByPrimarySkill(
-            @RequestParam Long primarySkillId) {
+    // @GetMapping
+    // public ResponseEntity<ApiResponse> getSecondarySkillsByPrimarySkill(
+    //         @RequestParam Long primarySkillId) {
 
-        PrimarySkill primarySkill = primarySkillService.getPrimarySkillById(primarySkillId).orElse(null);
-        if (primarySkill == null) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Primary skill not found"));
-        }
+    //     PrimarySkill primarySkill = primarySkillService.getPrimarySkillById(primarySkillId).orElse(null);
+    //     if (primarySkill == null) {
+    //         return ResponseEntity.badRequest()
+    //                 .body(ApiResponse.error("Primary skill not found"));
+    //     }
 
-        List<SecondarySkill> skills = secondarySkillService.getSecondarySkillsByPrimarySkill(primarySkill);
-        return ResponseEntity.ok(ApiResponse.success("Secondary skills retrieved", skills));
+    //     List<SecondarySkill> skills = secondarySkillService.getSecondarySkillsByPrimarySkill(primarySkill);
+    //     return ResponseEntity.ok(ApiResponse.success("Secondary skills retrieved", skills));
+    // }
+
+ @GetMapping
+public ResponseEntity<ApiResponse> getSecondarySkillsByPrimarySkill(
+        @RequestParam(name = "primarySkillId", required = false) Long primarySkillId) {
+
+    if (primarySkillId == null) {
+        return ResponseEntity.ok(ApiResponse.success("Secondary skills retrieved", Collections.emptyList()));
     }
+
+    List<SecondarySkill> skills = primarySkillService.getPrimarySkillById(primarySkillId)
+            .map(primarySkill -> secondarySkillService.getSecondarySkillsByPrimarySkill(primarySkill))
+            .orElse(Collections.emptyList());
+
+    return ResponseEntity.ok(ApiResponse.success("Secondary skills retrieved", skills));
+}
+
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getSecondarySkillById(@PathVariable Long id) {

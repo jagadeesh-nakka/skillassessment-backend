@@ -1,4 +1,3 @@
-// src/main/java/com/dnb/main/controller/PrimarySkillController.java
 package com.dnb.main.controller;
 
 import java.util.List;
@@ -6,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,74 +26,77 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/primary-skills")
+@CrossOrigin(origins = "http://localhost:3000") // allow React app to call this API
 public class PrimarySkillController {
-    
+
     @Autowired
     private PrimarySkillService primarySkillService;
-    
+
     @Autowired
     private UserService userService;
-    
+
+    // Get all primary skills
     @GetMapping
-    public ResponseEntity<ApiResponse> getAllPrimarySkills() {
+    public ResponseEntity<List<PrimarySkill>> getAllPrimarySkills() {
         List<PrimarySkill> skills = primarySkillService.getAllPrimarySkills();
-        return ResponseEntity.ok(ApiResponse.success("Primary skills retrieved", skills));
+       // System.out.println("Retrieved skills: " + skills); // Debug log
+        return ResponseEntity.ok(skills); // ✅ plain array
     }
-    
+
+    // Get skill by ID
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getPrimarySkillById(@PathVariable Long id) {
-        Optional<PrimarySkill> skill = primarySkillService.getPrimarySkillById(id);
-        if (skill.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Primary skill not found"));
+        Optional<PrimarySkill> skillOpt = primarySkillService.getPrimarySkillById(id);
+        if (skillOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Primary skill not found"));
         }
-        return ResponseEntity.ok(ApiResponse.success("Primary skill retrieved", skill.get()));
+        return ResponseEntity.ok(ApiResponse.success("Primary skill retrieved", skillOpt.get()));
     }
-    
+
+    // Create a new skill for a specific user
     @PostMapping
     public ResponseEntity<ApiResponse> createPrimarySkill(
             @Valid @RequestBody PrimarySkill primarySkill,
             @RequestParam Long userId) {
-        
-        User user = userService.getUserById(userId).orElse(null);
-        if (user == null) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("User not found"));
+
+        Optional<User> userOpt = userService.getUserById(userId);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("User not found"));
         }
-        
-        // Check if skill already exists
+
+        // Check if the skill already exists
         if (primarySkillService.getPrimarySkillByName(primarySkill.getName()).isPresent()) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Primary skill already exists"));
+            return ResponseEntity.badRequest().body(ApiResponse.error("Primary skill already exists"));
         }
-        
-        PrimarySkill createdSkill = primarySkillService.createPrimarySkill(primarySkill, user);
+
+        PrimarySkill createdSkill = primarySkillService.createPrimarySkill(primarySkill, userOpt.get());
         return ResponseEntity.ok(ApiResponse.success("Primary skill created", createdSkill));
     }
-    
+
+    // Update an existing skill
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse> updatePrimarySkill(
             @PathVariable Long id,
             @Valid @RequestBody PrimarySkill skillDetails) {
-        
+
         PrimarySkill updatedSkill = primarySkillService.updatePrimarySkill(id, skillDetails);
         if (updatedSkill == null) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Primary skill not found"));
+            return ResponseEntity.badRequest().body(ApiResponse.error("Primary skill not found"));
         }
         return ResponseEntity.ok(ApiResponse.success("Primary skill updated", updatedSkill));
     }
-    
+
+    // Delete a skill by ID
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse> deletePrimarySkill(@PathVariable Long id) {
         boolean deleted = primarySkillService.deletePrimarySkill(id);
         if (!deleted) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Primary skill not found"));
+            return ResponseEntity.badRequest().body(ApiResponse.error("Primary skill not found"));
         }
         return ResponseEntity.ok(ApiResponse.success("Primary skill deleted"));
     }
-    
+
+    // Search skills by keyword
     @GetMapping("/search")
     public ResponseEntity<ApiResponse> searchPrimarySkills(@RequestParam String keyword) {
         List<PrimarySkill> skills = primarySkillService.searchPrimarySkills(keyword);

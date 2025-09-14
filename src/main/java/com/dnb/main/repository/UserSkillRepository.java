@@ -11,7 +11,14 @@ import com.dnb.main.model.UserSkill;
 
 @Repository
 public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
+
+    // 🔹 Get all skills for a given user
     List<UserSkill> findByUser(User user);
-    Boolean existsByUserAndPrimarySkillIdAndSecondarySkillId(
-        User user, Long primarySkillId, Long secondarySkillId);
+
+    // 🔹 Check if a user already has a skill combination (traverses relationships)
+    boolean existsByUserAndPrimarySkill_IdAndSecondarySkill_Id(
+        User user, Long primarySkillId, Long secondarySkillId
+    );
+
+    
 }
