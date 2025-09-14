@@ -66,4 +66,24 @@ public class AuthController {
         
         return ResponseEntity.ok(ApiResponse.success("Login successful", user));
     }
+
+
+@GetMapping("/current-user")
+public ResponseEntity<ApiResponse> getCurrentUser(@RequestParam String username) {
+    if (username == null || username.isEmpty()) {
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.error("Username is required"));
+    }
+
+    User user = userService.getUserByUsername(username)
+            .orElse(userService.getUserByEmail(username).orElse(null));
+
+    if (user == null) {
+        return ResponseEntity.status(404)
+                .body(ApiResponse.error("User not found"));
+    }
+
+    return ResponseEntity.ok(ApiResponse.success("Current user fetched successfully", user));
+}
+
 }
